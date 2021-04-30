@@ -1,3 +1,4 @@
 raw/
 data/
 helpers/password.py
+helpers/__pycache__
