@@ -6,42 +6,46 @@ import pandas as pd
 import pickle
 import plotly.express as px
 
-
-# seteo la barra del costado
-
-st.sidebar.header('Elija el monitor')
-page = st.sidebar.selectbox('Distribucion de los puntajes', ["Homepage", "General", "Tipo de socio", \
-    "Grupo etario", "Genero", "Socio cancha", "Descargar csv"])
-
-st.sidebar.header('Elija puntajes')
-patrimonial = st.sidebar.slider("Patrimonial pts:", 0, 2000, 2000, 100, '%d')
-refundador = st.sidebar.slider("Refundador pts", 0, 2000, 1500, 100, '%d')
-debito = st.sidebar.slider("Debito pts", 0, 2000, 1000, 100, '%d')
-ant_simple = st.sidebar.slider("Antiguedad Simple pts", 0, 1000, 250, 50, '%d')
-ant_pleno = st.sidebar.slider("Antiguedad Pleno pts", 0, 1000, 350, 50, '%d')
-ant_interior = st.sidebar.slider("Antiguedad Interior pts", 0, 1000, 350, 50, '%d')
-ant_exterior = st.sidebar.slider("Antiguedad Exterior pts", 0, 1000, 500, 50, '%d')
-ant_vitalic = st.sidebar.slider("Antiguedad Vitalicio pts", 0, 1000, 350, 50, '%d')
-abo_bidegain = st.sidebar.slider("Abono Bidegain pts", 0, 2000, 1000, 100, '%d')
-abo_polideportivo = st.sidebar.slider("Abono Polideportivo pts", 0, 2000, 500, 100, '%d')
-# vita_abonando = st.sidebar.slider("Vitalicio cuota pts", 0, 2000, 25, 100, '%d')
-# cuota_dia_aspo = st.sidebar.slider("Cuota al dia ASPO pts", 0, 2000, 1000, 100, '%d')
-eve_bid_amba = st.sidebar.slider("Bidegain Ingreso AMBA pts", 0, 500, 50, 25, '%d')
-eve_bid_inte = st.sidebar.slider("Bidegain Ingreso Interior pts", 0, 500, 75, 25, '%d')
-# eve_pol_amba = st.sidebar.slider("Polideportivo Ingreso AMBA pts", 0, 500, 50, 25, '%d')
-# eve_pol_inte = st.sidebar.slider("Polideportivo Ingreso Interior pts", 0, 500, 75, 25, '%d')
+from helpers.SessionState import get
+from helpers.password import get_pass
 
 
-# setel el contenido de las paginas
+# seteo el contenido de las paginas
 
 def main():
+
+    # seteo la barra del costado
+
+    st.sidebar.header('Elija el monitor')
+
+    page = st.sidebar.selectbox('Distribucion de los puntajes', ["Homepage", "General", "Tipo de socio", \
+        "Grupo etario", "Genero", "Socio cancha", "Descargar csv"])
+
+    st.sidebar.header('Elija puntajes')
+    patrimonial = st.sidebar.slider("Patrimonial pts:", 0, 2000, 2000, 100, '%d')
+    refundador = st.sidebar.slider("Refundador pts", 0, 2000, 1500, 100, '%d')
+    debito = st.sidebar.slider("Debito pts", 0, 2000, 1000, 100, '%d')
+    ant_simple = st.sidebar.slider("Antiguedad Simple pts", 0, 1000, 250, 50, '%d')
+    ant_pleno = st.sidebar.slider("Antiguedad Pleno pts", 0, 1000, 350, 50, '%d')
+    ant_interior = st.sidebar.slider("Antiguedad Interior pts", 0, 1000, 350, 50, '%d')
+    ant_exterior = st.sidebar.slider("Antiguedad Exterior pts", 0, 1000, 500, 50, '%d')
+    ant_vitalic = st.sidebar.slider("Antiguedad Vitalicio pts", 0, 1000, 350, 50, '%d')
+    abo_bidegain = st.sidebar.slider("Abono Bidegain pts", 0, 2000, 1000, 100, '%d')
+    abo_polideportivo = st.sidebar.slider("Abono Polideportivo pts", 0, 2000, 500, 100, '%d')
+    # vita_abonando = st.sidebar.slider("Vitalicio cuota pts", 0, 2000, 25, 100, '%d')
+    # cuota_dia_aspo = st.sidebar.slider("Cuota al dia ASPO pts", 0, 2000, 1000, 100, '%d')
+    eve_bid_amba = st.sidebar.slider("Bidegain Ingreso AMBA pts", 0, 500, 50, 25, '%d')
+    eve_bid_inte = st.sidebar.slider("Bidegain Ingreso Interior pts", 0, 500, 75, 25, '%d')
+    # eve_pol_amba = st.sidebar.slider("Polideportivo Ingreso AMBA pts", 0, 500, 50, 25, '%d')
+    # eve_pol_inte = st.sidebar.slider("Polideportivo Ingreso Interior pts", 0, 500, 75, 25, '%d')
+    mult_mujer = st.sidebar.selectbox('Multiplicador Mujeres', [1,1.5,2])
 
     df = load_datasets()
 
     if st.sidebar.button('Calcular'):
-        df = calc_puntos(df)
-
-    # if st.sidebar.button('Entrenar'):
+        df = calc_puntos(df, patrimonial, refundador, debito, ant_simple, ant_pleno, ant_interior, \
+                ant_exterior, ant_vitalic, abo_bidegain, abo_polideportivo, eve_bid_amba, eve_bid_inte, \
+                mult_mujer)
     
     if page == "Homepage":
     	st.image('helpers/sl_cabecera.PNG')
@@ -209,7 +213,6 @@ def main():
             linko= f'<a href="data:file/csv;base64,{b64}" download="myfilename.csv">Download csv file</a>'
             st.markdown(linko, unsafe_allow_html=True)
 
-
 # funciones
 
 @st.cache(show_spinner=False, allow_output_mutation=True)
@@ -219,7 +222,9 @@ def load_datasets():
     df['puntos'] = 0
     return df
 
-def calc_puntos(df):
+def calc_puntos(df, patrimonial, refundador, debito, ant_simple, ant_pleno, ant_interior, \
+                ant_exterior, ant_vitalic, abo_bidegain, abo_polideportivo, eve_bid_amba, eve_bid_inte, \
+                cancha_mujer):
     df['puntos'] = 0
 
     df.loc[df['tipo_socio']=='PATRIMONIAL', 'puntos'] += patrimonial
@@ -238,15 +243,23 @@ def calc_puntos(df):
     df['puntos'] += df['abo_pol_2021'] * abo_polideportivo
 
     intext = (df['tipo_socio']=='INTERIOR') | (df['tipo_socio']=='EXTERIOR')
-    df.loc[~intext, 'puntos'] += df.loc[~intext, 'eve_2018'] * eve_bid_amba
-    df.loc[~intext, 'puntos'] += df.loc[~intext, 'eve_2019'] * eve_bid_amba
-    df.loc[~intext, 'puntos'] += df.loc[~intext, 'eve_2020'] * eve_bid_amba
-    df.loc[intext, 'puntos'] += df.loc[intext, 'eve_2018'] * eve_bid_inte
-    df.loc[intext, 'puntos'] += df.loc[intext, 'eve_2019'] * eve_bid_inte
-    df.loc[intext, 'puntos'] += df.loc[intext, 'eve_2020'] * eve_bid_inte
+    df.loc[((~intext) & (df['sexo']=='M')), 'puntos'] += df.loc[~intext, 'eve_2018'] * eve_bid_amba
+    df.loc[((~intext) & (df['sexo']=='M')), 'puntos'] += df.loc[~intext, 'eve_2019'] * eve_bid_amba
+    df.loc[((~intext) & (df['sexo']=='M')), 'puntos'] += df.loc[~intext, 'eve_2020'] * eve_bid_amba
+
+    df.loc[((~intext) & (df['sexo']=='F')), 'puntos'] += (df.loc[~intext, 'eve_2018'] * eve_bid_amba * cancha_mujer)
+    df.loc[((~intext) & (df['sexo']=='F')), 'puntos'] += (df.loc[~intext, 'eve_2018'] * eve_bid_amba * cancha_mujer)
+    df.loc[((~intext) & (df['sexo']=='F')), 'puntos'] += (df.loc[~intext, 'eve_2018'] * eve_bid_amba * cancha_mujer)
+    
+    df.loc[((intext) & (df['sexo']=='M')), 'puntos'] += df.loc[intext, 'eve_2018'] * eve_bid_inte
+    df.loc[((intext) & (df['sexo']=='M')), 'puntos'] += df.loc[intext, 'eve_2019'] * eve_bid_inte
+    df.loc[((intext) & (df['sexo']=='M')), 'puntos'] += df.loc[intext, 'eve_2020'] * eve_bid_inte
+
+    df.loc[((intext) & (df['sexo']=='F')), 'puntos'] += (df.loc[intext, 'eve_2018'] * eve_bid_inte * cancha_mujer)
+    df.loc[((intext) & (df['sexo']=='F')), 'puntos'] += (df.loc[intext, 'eve_2019'] * eve_bid_inte * cancha_mujer)
+    df.loc[((intext) & (df['sexo']=='F')), 'puntos'] += (df.loc[intext, 'eve_2020'] * eve_bid_inte * cancha_mujer)
 
     return df
-
 
 # formato
 
@@ -278,5 +291,22 @@ st.markdown(
         unsafe_allow_html=True,
     )
 
+
+# user access
+
+# session_state = get(password='')
+    
+# if session_state.password != get_pass():
+#     pwd_placeholder = st.sidebar.empty()
+#     pwd = pwd_placeholder.text_input("Password:", value="", type="password")
+#     session_state.password = pwd
+#     if session_state.password == get_pass():
+#         pwd_placeholder.empty()
+#         main()
+#     else:
+#         st.error("the password you entered is incorrect")
+# else:
+#     main()
+
 if __name__ == "__main__":
-    main()
+   main()
