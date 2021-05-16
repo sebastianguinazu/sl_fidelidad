@@ -25,6 +25,7 @@ def main():
     patrimonial = st.sidebar.slider("Patrimonial pts:", 0, 2000, 2000, 100, '%d')
     refundador = st.sidebar.slider("Refundador pts", 0, 2000, 1500, 100, '%d')
     debito = st.sidebar.slider("Debito pts", 0, 2000, 1000, 100, '%d')
+    cuota_dia_aspo = st.sidebar.slider("Cuota al dia ASPO pts", 0, 2000, 1000, 100, '%d')
     ant_simple = st.sidebar.slider("Antiguedad Simple pts", 0, 1000, 250, 50, '%d')
     ant_pleno = st.sidebar.slider("Antiguedad Pleno pts", 0, 1000, 350, 50, '%d')
     ant_interior = st.sidebar.slider("Antiguedad Interior pts", 0, 1000, 350, 50, '%d')
@@ -33,7 +34,6 @@ def main():
     abo_bidegain = st.sidebar.slider("Abono Bidegain pts", 0, 2000, 1000, 100, '%d')
     abo_polideportivo = st.sidebar.slider("Abono Polideportivo pts", 0, 2000, 500, 100, '%d')
     # vita_abonando = st.sidebar.slider("Vitalicio cuota pts", 0, 2000, 25, 100, '%d')
-    # cuota_dia_aspo = st.sidebar.slider("Cuota al dia ASPO pts", 0, 2000, 1000, 100, '%d')
     eve_bid_amba = st.sidebar.slider("Bidegain Ingreso AMBA pts", 0, 500, 50, 25, '%d')
     eve_bid_inte = st.sidebar.slider("Bidegain Ingreso Interior pts", 0, 500, 75, 25, '%d')
     # eve_pol_amba = st.sidebar.slider("Polideportivo Ingreso AMBA pts", 0, 500, 50, 25, '%d')
@@ -43,7 +43,7 @@ def main():
     df = load_datasets()
 
     if st.sidebar.button('Calcular'):
-        df = calc_puntos(df, patrimonial, refundador, debito, ant_simple, ant_pleno, ant_interior, \
+        df = calc_puntos(df, patrimonial, refundador, debito, cuota_dia_aspo, ant_simple, ant_pleno, ant_interior, \
                 ant_exterior, ant_vitalic, abo_bidegain, abo_polideportivo, eve_bid_amba, eve_bid_inte, \
                 mult_mujer)
     
@@ -101,7 +101,8 @@ def main():
         st.markdown("### Grafico de la distribucion")
         if st.button('Mostrar'):
             fig = px.box(df, x="tipo_socio", y="puntos", color="tipo_socio", color_discrete_sequence=["blue", "red", "blue", "red", "blue", "red"], \
-                labels={"puntos":'Puntos de fidelidad', 'tipo_socio':'Tipo de socio'})
+                labels={"puntos":'Puntos de fidelidad', 'tipo_socio':'Tipo de socio'},
+                category_orders={"tipo_socio": ["VITALICIO", "SIMPLE", "PLENO", "INTERIOR", "EXTERIOR"]})
             st.plotly_chart(fig, use_container_width=True)
 
     elif page == "Grupo etario":
@@ -128,7 +129,8 @@ def main():
         st.markdown("### Grafico de la distribucion")
         if st.button('Mostrar'):
             fig = px.box(df[~df['edad'].isna()], x="grupo_etario", y="puntos", color="grupo_etario", color_discrete_sequence=["blue", "red", "blue", "red", "blue"], \
-                labels={"puntos":'Puntos de fidelidad', 'grupo_etario':'Grupo etario'})
+                labels={"puntos":'Puntos de fidelidad', 'grupo_etario':'Grupo etario'},
+                category_orders={"grupo_etario": ["Mayor a 60", "Entre 45 y 59", "Entre 30 y 44", "Entre 18 y 29", "Menores a 18"]})
             st.plotly_chart(fig, use_container_width=True)
 
     elif page == "Genero":
@@ -222,7 +224,7 @@ def load_datasets():
     df['puntos'] = 0
     return df
 
-def calc_puntos(df, patrimonial, refundador, debito, ant_simple, ant_pleno, ant_interior, \
+def calc_puntos(df, patrimonial, refundador, debito, cuota_dia_aspo, ant_simple, ant_pleno, ant_interior, \
                 ant_exterior, ant_vitalic, abo_bidegain, abo_polideportivo, eve_bid_amba, eve_bid_inte, \
                 cancha_mujer):
     df['puntos'] = 0
@@ -230,6 +232,7 @@ def calc_puntos(df, patrimonial, refundador, debito, ant_simple, ant_pleno, ant_
     df.loc[df['tipo_socio']=='PATRIMONIAL', 'puntos'] += patrimonial
     df.loc[df['refunda']==1, 'puntos'] += refundador
     df.loc[df['forma_pago']=='DEBITO', 'puntos'] += debito
+    df.loc[df['aspo_dia']==1, 'puntos'] += cuota_dia_aspo
 
     df.loc[df['tipo_socio']=='SIMPLE', 'puntos'] += df.loc[df['tipo_socio']=='SIMPLE', 'antig'] * ant_simple
     df.loc[df['tipo_socio']=='PLENO', 'puntos'] += df.loc[df['tipo_socio']=='PLENO', 'antig'] * ant_pleno
@@ -294,19 +297,19 @@ st.markdown(
 
 # user access
 
-# session_state = get(password='')
+session_state = get(password='')
     
-# if session_state.password != get_pass():
-#     pwd_placeholder = st.sidebar.empty()
-#     pwd = pwd_placeholder.text_input("Password:", value="", type="password")
-#     session_state.password = pwd
-#     if session_state.password == get_pass():
-#         pwd_placeholder.empty()
-#         main()
-#     else:
-#         st.error("the password you entered is incorrect")
-# else:
-#     main()
+if session_state.password != get_pass():
+    pwd_placeholder = st.sidebar.empty()
+    pwd = pwd_placeholder.text_input("Password:", value="", type="password")
+    session_state.password = pwd
+    if session_state.password == get_pass():
+        pwd_placeholder.empty()
+        main()
+    else:
+        st.error("the password you entered is incorrect")
+else:
+    main()
 
-if __name__ == "__main__":
-   main()
+# if __name__ == "__main__":
+#    main()
